@@ -1,14 +1,6 @@
 #include <Windows.h>
 #include <signal.h>
 
-HHOOK hookHandle;
-
-void handleCtrlC(int sig) {
-    // Cleanup the hook
-    UnhookWindowsHookEx((HHOOK)hookHandle);
-    exit(0);
-}
-
 int main() {
     // Load the DLL
     HMODULE wmDll = LoadLibraryW(L"wm_dll.dll");
@@ -30,7 +22,7 @@ int main() {
      * We're interested in WH_SHELL because it tells us the type
      * of window event that occurred.
     */
-    hookHandle = SetWindowsHookExW(
+    HHOOK hookHandle = SetWindowsHookExW(
         WH_SHELL,
         // Pointer to the hook procedure. This needs to come from a separate DLL.
         (HOOKPROC)hookProcedure,
@@ -45,11 +37,28 @@ int main() {
         return 1;
     }
 
-    // Detect if Crtl+C is pressed and handle it
-    signal(SIGINT, handleCtrlC);
+    // Use a message queue
+    while (TRUE) {
+        DWORD result = MsgWaitForMultipleObjects(0, NULL, FALSE, INFINITE, QS_ALLINPUT);
+        if (result == WAIT_OBJECT_0) {
+            MSG msg;
+            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+        } else {
+            // Handle other conditions, such as signaled events for shutdown
+        }
+    }
 
-    // Wait for the user to press Ctrl+C. Until then, the hook procedure executes.
-    while (1) {}
+    // Cleanup
+    if (hookHandle != NULL) {
+        UnhookWindowsHookEx(hookHandle);
+    }
+
+    if (wmDll != NULL) {
+        FreeLibrary(wmDll);
+    }
 
     return 0;
 }
