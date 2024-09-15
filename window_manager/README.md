@@ -8,6 +8,8 @@ Simple Windows Window Manager (SWWM) is a lightweight, easy-to-use desktop windo
 - **Low Resource Usage**: Designed to be lightweight and efficient, minimizing CPU and memory usage.
 - **Easy to Use**: Runs in the background with no user input required to manage window layout.
 
+Note that the current solution does not work with multiple displays.
+
 ## Getting Started
 
 ### Prerequisites
